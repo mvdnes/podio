@@ -341,7 +341,8 @@ mod test {
         let mut reader = io::Cursor::new(buf);
 
         reader.set_position(0);
-        assert_eq!(reader.read_u64::<BigEndian>().unwrap(), 0x0123456789abcdef);
+        let expected = if ::std::usize::BYTES == 4 { 0x01234567_u64 } else { 0x0123456789abcdef_u64 } as usize;
+        assert_eq!(reader.read_usize::<BigEndian>().unwrap(), expected);
 
         reader.set_position(0);
         assert_eq!(reader.read_u64::<BigEndian>().unwrap(), 0x0123456789abcdef);
@@ -362,7 +363,8 @@ mod test {
         let mut reader = io::Cursor::new(buf);
 
         reader.set_position(0);
-        assert_eq!(reader.read_u64::<LittleEndian>().unwrap(), 0xefcdab8967452301);
+        let expected = if ::std::usize::BYTES == 4 { 0x67452301_u64 } else { 0xefcdab8967452301_u64 } as usize;
+        assert_eq!(reader.read_usize::<LittleEndian>().unwrap(), expected);
 
         reader.set_position(0);
         assert_eq!(reader.read_u64::<LittleEndian>().unwrap(), 0xefcdab8967452301);
