@@ -121,12 +121,12 @@ impl<W: Write> WritePodExt for W {
     }
 
     fn write_f32<T: Endianness>(&mut self, val: f32) -> io::Result<()> {
-        let tval: u32 = unsafe { ::std::mem::transmute(val) };
+        let tval: u32 = unsafe { ::std::mem::transmute::<f32, u32>(val) };
         self.write_u32::<T>(tval)
     }
 
     fn write_f64<T: Endianness>(&mut self, val: f64) -> io::Result<()> {
-        let tval: u64 = unsafe { ::std::mem::transmute(val) };
+        let tval: u64 = unsafe { ::std::mem::transmute::<f64, u64>(val) };
         self.write_u64::<T>(tval)
     }
 }
