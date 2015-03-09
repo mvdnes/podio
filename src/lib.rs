@@ -150,6 +150,8 @@ impl Endianness for BigEndian {
     }
 }
 
+const USIZE_BYTES: usize = std::usize::BYTES as usize;
+
 macro_rules! val_to_buf {
     ($val:ident, $buf:ident) => {
         {
@@ -162,7 +164,7 @@ macro_rules! val_to_buf {
 
 impl<W: Write> WritePodExt for W {
     fn write_usize<T: Endianness>(&mut self, val: usize) -> io::Result<()> {
-        let mut buf = [0u8; ::std::usize::BYTES as usize];
+        let mut buf = [0u8; USIZE_BYTES];
         let tval = <T as Endianness>::int_to_target(val);
         val_to_buf!(tval, buf);
         self.write_all(&buf)
@@ -214,12 +216,12 @@ impl<W: Write> WritePodExt for W {
     }
 
     fn write_f32<T: Endianness>(&mut self, val: f32) -> io::Result<()> {
-        let tval: u32 = unsafe { ::std::mem::transmute::<f32, u32>(val) };
+        let tval: u32 = unsafe { std::mem::transmute::<f32, u32>(val) };
         self.write_u32::<T>(tval)
     }
 
     fn write_f64<T: Endianness>(&mut self, val: f64) -> io::Result<()> {
-        let tval: u64 = unsafe { ::std::mem::transmute::<f64, u64>(val) };
+        let tval: u64 = unsafe { std::mem::transmute::<f64, u64>(val) };
         self.write_u64::<T>(tval)
     }
 }
@@ -250,7 +252,7 @@ macro_rules! buf_to_val {
 
 impl<R: Read> ReadPodExt for R {
     fn read_usize<T: Endianness>(&mut self) -> io::Result<usize> {
-        let buf = &mut [0u8; ::std::usize::BYTES as usize];
+        let buf = &mut [0u8; USIZE_BYTES];
         try!(fill_buf(self, buf));
         let tval = buf_to_val!(buf, usize);
         Ok(<T as Endianness>::int_from_target(tval))
@@ -295,10 +297,10 @@ impl<R: Read> ReadPodExt for R {
         self.read_u8::<T>().map(|v| v as i8)
     }
     fn read_f64<T: Endianness>(&mut self) -> io::Result<f64> {
-        self.read_u64::<T>().map(|v| unsafe { ::std::mem::transmute::<u64, f64>(v) })
+        self.read_u64::<T>().map(|v| unsafe { std::mem::transmute::<u64, f64>(v) })
     }
     fn read_f32<T: Endianness>(&mut self) -> io::Result<f32> {
-        self.read_u32::<T>().map(|v| unsafe { ::std::mem::transmute::<u32, f32>(v) })
+        self.read_u32::<T>().map(|v| unsafe { std::mem::transmute::<u32, f32>(v) })
     }
     fn read_exact(&mut self, len: usize) -> io::Result<Vec<u8>> {
         let mut res = vec![0; len];
@@ -312,6 +314,7 @@ mod test {
     use std::io;
     use super::{LittleEndian, BigEndian};
     use super::{ReadPodExt, WritePodExt};
+    use super::USIZE_BYTES;
 
     #[test]
     fn write_be() {
@@ -320,7 +323,7 @@ mod test {
 
         writer.set_position(0);
         writer.write_usize::<BigEndian>(0x01_23_45_67_89_ab_cd_ef_u64 as usize).unwrap();
-        assert_eq!(&writer.get_ref()[0..::std::usize::BYTES as usize], &[0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef][8-::std::usize::BYTES as usize..]);
+        assert_eq!(&writer.get_ref()[0..USIZE_BYTES], &[0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef][8-USIZE_BYTES..]);
         
         writer.set_position(0);
         writer.write_u64::<BigEndian>(0x01_23_45_67_89_ab_cd_ef).unwrap();
@@ -346,7 +349,7 @@ mod test {
 
         writer.set_position(0);
         writer.write_usize::<LittleEndian>(0x01_23_45_67_89_ab_cd_ef_u64 as usize).unwrap();
-        assert_eq!(&writer.get_ref()[0..::std::usize::BYTES as usize], &[0xef, 0xcd, 0xab, 0x89, 0x67, 0x45, 0x23, 0x01][..::std::usize::BYTES as usize]);
+        assert_eq!(&writer.get_ref()[0..USIZE_BYTES], &[0xef, 0xcd, 0xab, 0x89, 0x67, 0x45, 0x23, 0x01][..USIZE_BYTES]);
         
         writer.set_position(0);
         writer.write_u64::<LittleEndian>(0x01_23_45_67_89_ab_cd_ef).unwrap();
@@ -393,7 +396,7 @@ mod test {
         let mut reader = io::Cursor::new(buf);
 
         reader.set_position(0);
-        let expected = if ::std::usize::BYTES == 4 { 0x01234567_u64 } else { 0x0123456789abcdef_u64 } as usize;
+        let expected = if USIZE_BYTES == 4 { 0x01234567_u64 } else { 0x0123456789abcdef_u64 } as usize;
         assert_eq!(reader.read_usize::<BigEndian>().unwrap(), expected);
 
         reader.set_position(0);
@@ -415,7 +418,7 @@ mod test {
         let mut reader = io::Cursor::new(buf);
 
         reader.set_position(0);
-        let expected = if ::std::usize::BYTES == 4 { 0x67452301_u64 } else { 0xefcdab8967452301_u64 } as usize;
+        let expected = if USIZE_BYTES == 4 { 0x67452301_u64 } else { 0xefcdab8967452301_u64 } as usize;
         assert_eq!(reader.read_usize::<LittleEndian>().unwrap(), expected);
 
         reader.set_position(0);
