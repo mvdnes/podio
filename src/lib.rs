@@ -64,6 +64,8 @@ pub trait ReadPodExt {
     fn read_f32<T: Endianness>(&mut self) -> io::Result<f32>;
     /// Read a f64
     fn read_f64<T: Endianness>(&mut self) -> io::Result<f64>;
+    /// Read a specific number of bytes
+    fn read_exact(&mut self, usize) -> io::Result<Vec<u8>>;
 }
 
 impl Endianness for LittleEndian {
@@ -234,6 +236,11 @@ impl<R: Read> ReadPodExt for R {
     fn read_f32<T: Endianness>(&mut self) -> io::Result<f32> {
         self.read_u32::<T>().map(|v| unsafe { ::std::mem::transmute::<u32, f32>(v) })
     }
+    fn read_exact(&mut self, len: usize) -> io::Result<Vec<u8>> {
+        let mut res = vec![0; len];
+        try!(fill_buf(self, &mut res));
+        Ok(res)
+    }
 }
 
 #[cfg(test)]
@@ -371,5 +378,14 @@ mod test {
 
         let mut buf: &[u8] = &[0x3D, 0x0A, 0xD7, 0xA3, 0x70, 0x3D, 0x24, 0x40];
         assert_eq!(buf.read_f64::<LittleEndian>().unwrap(), 10.12f64);
+    }
+
+    #[test]
+    fn read_exact() {
+        let mut buf: &[u8] = &[1, 2, 3, 4, 5, 6, 7, 8];
+        assert_eq!(<&[u8] as ReadPodExt>::read_exact(&mut buf, 2).unwrap(), [1,2]);
+        assert_eq!(<&[u8] as ReadPodExt>::read_exact(&mut buf, 1).unwrap(), [3]);
+        assert_eq!(<&[u8] as ReadPodExt>::read_exact(&mut buf, 0).unwrap(), []);
+        assert_eq!(<&[u8] as ReadPodExt>::read_exact(&mut buf, 5).unwrap(), [4,5,6,7,8]);
     }
 }
