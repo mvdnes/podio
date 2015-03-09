@@ -39,6 +39,33 @@ pub trait WritePodExt {
     fn write_f64<T: Endianness>(&mut self, f64) -> io::Result<()>;
 }
 
+pub trait ReadPodExt {
+    /// Read a usize
+    fn read_usize<T: Endianness>(&mut self) -> io::Result<usize>;
+    /// Read a u64
+    fn read_u64<T: Endianness>(&mut self) -> io::Result<u64>;
+    /// Read a u32
+    fn read_u32<T: Endianness>(&mut self) -> io::Result<u32>;
+    /// Read a u16
+    fn read_u16<T: Endianness>(&mut self) -> io::Result<u16>;
+    /// Read a u8
+    fn read_u8<T: Endianness>(&mut self) -> io::Result<u8>;
+    /// Read a isize
+    fn read_isize<T: Endianness>(&mut self) -> io::Result<isize>;
+    /// Read a i64
+    fn read_i64<T: Endianness>(&mut self) -> io::Result<i64>;
+    /// Read a i32
+    fn read_i32<T: Endianness>(&mut self) -> io::Result<i32>;
+    /// Read a i16
+    fn read_i16<T: Endianness>(&mut self) -> io::Result<i16>;
+    /// Read a i8
+    fn read_i8<T: Endianness>(&mut self) -> io::Result<i8>;
+    /// Read a f32
+    fn read_f32<T: Endianness>(&mut self) -> io::Result<f32>;
+    /// Read a f64
+    fn read_f64<T: Endianness>(&mut self) -> io::Result<f64>;
+}
+
 impl Endianness for LittleEndian {
     fn int_to_target<T: std::num::Int>(val: T) -> T {
         val.to_le()
@@ -131,11 +158,89 @@ impl<W: Write> WritePodExt for W {
     }
 }
 
+fn fill_buf<R: Read>(reader: &mut R, buf: &mut [u8]) -> io::Result<()> {
+    let mut idx = 0;
+    while idx != buf.len() {
+        match reader.read(&mut buf[idx..]) {
+            Ok(0) => return Err(io::Error::new(io::ErrorKind::ResourceUnavailable, "Could not read enough bytes", None)),
+            Ok(v) => { idx += v; }
+            Err(e) => return Err(e),
+        }
+    }
+    Ok(())
+}
+
+macro_rules! buf_to_val {
+    ($buf:ident, $typ:ty) => {
+        {
+            let mut val: $typ = 0;
+            for i in 0..$buf.len() {
+                val |= ($buf[i] as $typ) << (i * 8);
+            }
+            val
+        }
+    };
+}
+
+impl<R: Read> ReadPodExt for R {
+    fn read_usize<T: Endianness>(&mut self) -> io::Result<usize> {
+        let buf = &mut [0u8; ::std::usize::BYTES as usize];
+        try!(fill_buf(self, buf));
+        let tval = buf_to_val!(buf, usize);
+        Ok(<T as Endianness>::int_from_target(tval))
+    }
+    fn read_u64<T: Endianness>(&mut self) -> io::Result<u64> {
+        let buf = &mut [0u8; 8];
+        try!(fill_buf(self, buf));
+        let tval = buf_to_val!(buf, u64);
+        Ok(<T as Endianness>::int_from_target(tval))
+    }
+    fn read_u32<T: Endianness>(&mut self) -> io::Result<u32> {
+        let buf = &mut [0u8; 4];
+        try!(fill_buf(self, buf));
+        let tval = buf_to_val!(buf, u32);
+        Ok(<T as Endianness>::int_from_target(tval))
+    }
+    fn read_u16<T: Endianness>(&mut self) -> io::Result<u16> {
+        let buf = &mut [0u8; 2];
+        try!(fill_buf(self, buf));
+        let tval = buf_to_val!(buf, u16);
+        Ok(<T as Endianness>::int_from_target(tval))
+    }
+    fn read_u8<T: Endianness>(&mut self) -> io::Result<u8> {
+        let buf = &mut [0u8; 1];
+        try!(fill_buf(self, buf));
+        let tval = buf_to_val!(buf, u8);
+        Ok(<T as Endianness>::int_from_target(tval))
+    }
+    fn read_isize<T: Endianness>(&mut self) -> io::Result<isize> {
+        self.read_usize::<T>().map(|v| v as isize)
+    }
+    fn read_i64<T: Endianness>(&mut self) -> io::Result<i64> {
+        self.read_u64::<T>().map(|v| v as i64)
+    }
+    fn read_i32<T: Endianness>(&mut self) -> io::Result<i32> {
+        self.read_u32::<T>().map(|v| v as i32)
+    }
+    fn read_i16<T: Endianness>(&mut self) -> io::Result<i16> {
+        self.read_u16::<T>().map(|v| v as i16)
+    }
+    fn read_i8<T: Endianness>(&mut self) -> io::Result<i8> {
+        self.read_u8::<T>().map(|v| v as i8)
+    }
+    fn read_f64<T: Endianness>(&mut self) -> io::Result<f64> {
+        self.read_u64::<T>().map(|v| unsafe { ::std::mem::transmute::<u64, f64>(v) })
+    }
+    fn read_f32<T: Endianness>(&mut self) -> io::Result<f32> {
+        self.read_u32::<T>().map(|v| unsafe { ::std::mem::transmute::<u32, f32>(v) })
+    }
+}
+
 #[cfg(test)]
 mod test {
     use std::io;
     use super::{LittleEndian, BigEndian};
-    use super::WritePodExt;
+    use super::{ReadPodExt, WritePodExt};
 
     #[test]
     fn write_be() {
@@ -209,5 +314,62 @@ mod test {
         writer.set_position(0);
         writer.write_f64::<BigEndian>(10.12f64).unwrap();
         assert_eq!(&writer.get_ref()[0..8], &[0x40, 0x24, 0x3D, 0x70, 0xA3, 0xD7, 0x0A, 0x3D]);
+    }
+
+    #[test]
+    fn read_be() {
+        let buf: &[u8] = &[0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef];
+        let mut reader = io::Cursor::new(buf);
+
+        reader.set_position(0);
+        assert_eq!(reader.read_u64::<BigEndian>().unwrap(), 0x0123456789abcdef);
+
+        reader.set_position(0);
+        assert_eq!(reader.read_u64::<BigEndian>().unwrap(), 0x0123456789abcdef);
+
+        reader.set_position(0);
+        assert_eq!(reader.read_u32::<BigEndian>().unwrap(), 0x01234567);
+
+        reader.set_position(0);
+        assert_eq!(reader.read_u16::<BigEndian>().unwrap(), 0x0123);
+
+        reader.set_position(0);
+        assert_eq!(reader.read_u8::<BigEndian>().unwrap(), 0x01);
+    }
+
+    #[test]
+    fn read_le() {
+        let buf: &[u8] = &[0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef];
+        let mut reader = io::Cursor::new(buf);
+
+        reader.set_position(0);
+        assert_eq!(reader.read_u64::<LittleEndian>().unwrap(), 0xefcdab8967452301);
+
+        reader.set_position(0);
+        assert_eq!(reader.read_u64::<LittleEndian>().unwrap(), 0xefcdab8967452301);
+
+        reader.set_position(0);
+        assert_eq!(reader.read_u32::<LittleEndian>().unwrap(), 0x67452301);
+
+        reader.set_position(0);
+        assert_eq!(reader.read_u16::<LittleEndian>().unwrap(), 0x2301);
+
+        reader.set_position(0);
+        assert_eq!(reader.read_u8::<LittleEndian>().unwrap(), 0x01);
+    }
+
+    #[test]
+    fn read_float() {
+        let mut buf: &[u8] = &[0x41, 0x21, 0xEB, 0x85];
+        assert_eq!(buf.read_f32::<BigEndian>().unwrap(), 10.12f32);
+
+        let mut buf: &[u8] = &[0x85, 0xEB, 0x21, 0x41];
+        assert_eq!(buf.read_f32::<LittleEndian>().unwrap(), 10.12f32);
+
+        let mut buf: &[u8] = &[0x40, 0x24, 0x3D, 0x70, 0xA3, 0xD7, 0x0A, 0x3D];
+        assert_eq!(buf.read_f64::<BigEndian>().unwrap(), 10.12f64);
+
+        let mut buf: &[u8] = &[0x3D, 0x0A, 0xD7, 0xA3, 0x70, 0x3D, 0x24, 0x40];
+        assert_eq!(buf.read_f64::<LittleEndian>().unwrap(), 10.12f64);
     }
 }
