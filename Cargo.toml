@@ -3,3 +3,8 @@
 name = "podio"
 version = "0.0.1"
 authors = ["Mathijs van de Nes <git@mathijs.vd-nes.nl>"]
+license = "MIT"
+repository = "https://github.com/mvdnes/podio.git"
+description = """
+Additional trait for Read and Write to read and write Plain Old Data
+"""
