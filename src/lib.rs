@@ -1,17 +1,28 @@
+//! Additional methods for Read and Write
+//!
+//! The additional methods implemented allow reading and writing integers and floats
+//! in the specified endianness.
+
+#![warn(missing_docs)]
 #![feature(io, core)]
 
 use std::io;
 use std::io::prelude::*;
 
+/// Little endian. The number 0xABCD is stored [0xCD, 0xAB]
 pub enum LittleEndian {}
+/// Big endian. The number 0xABCD is stored [0xAB, 0xCD]
 pub enum BigEndian {}
 
+/// Trait implementing conversion methods for a specific endianness
 pub trait Endianness : std::marker::MarkerTrait {
+    /// Converts a value from the platform type to the specified endianness
     fn int_to_target<T: std::num::Int>(val: T) -> T;
+    /// Converts a value from the sepcified endianness to the platform type
     fn int_from_target<T: std::num::Int>(val: T) -> T;
 }
 
-/// Additional integer write methods for a io::Write
+/// Additional write methods for a io::Write
 pub trait WritePodExt {
     /// Write a usize
     fn write_usize<T: Endianness>(&mut self, usize) -> io::Result<()>;
@@ -39,6 +50,7 @@ pub trait WritePodExt {
     fn write_f64<T: Endianness>(&mut self, f64) -> io::Result<()>;
 }
 
+/// Additional read methods for a io::Read
 pub trait ReadPodExt {
     /// Read a usize
     fn read_usize<T: Endianness>(&mut self) -> io::Result<usize>;
