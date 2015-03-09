@@ -100,7 +100,7 @@ mod test {
 
         writer.set_position(0);
         writer.write_usize::<BigEndian>(0x01_23_45_67_89_ab_cd_ef_u64 as usize).unwrap();
-        assert_eq!(&writer.get_ref()[0..::std::usize::BYTES as usize], &[0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef][..::std::usize::BYTES as usize]);
+        assert_eq!(&writer.get_ref()[0..::std::usize::BYTES as usize], &[0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef][8-::std::usize::BYTES as usize..]);
         
         writer.set_position(0);
         writer.write_u64::<BigEndian>(0x01_23_45_67_89_ab_cd_ef).unwrap();
@@ -126,7 +126,7 @@ mod test {
 
         writer.set_position(0);
         writer.write_usize::<LittleEndian>(0x01_23_45_67_89_ab_cd_ef_u64 as usize).unwrap();
-        assert_eq!(&writer.get_ref()[0..::std::usize::BYTES as usize], &[0xef, 0xcd, 0xab, 0x89, 0x67, 0x45, 0x23, 0x01][8-::std::usize::BYTES as usize..]);
+        assert_eq!(&writer.get_ref()[0..::std::usize::BYTES as usize], &[0xef, 0xcd, 0xab, 0x89, 0x67, 0x45, 0x23, 0x01][..::std::usize::BYTES as usize]);
         
         writer.set_position(0);
         writer.write_u64::<LittleEndian>(0x01_23_45_67_89_ab_cd_ef).unwrap();
