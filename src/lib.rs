@@ -2,6 +2,58 @@
 //!
 //! The additional methods implemented allow reading and writing integers and floats
 //! in the specified endianness.
+//!
+//! # Usage
+//!
+//! Basically, you need to `use` the trait WritePodExt or ReadPodExt.
+//!
+//! # Examples
+//!
+//! ## Reading
+//!
+//! To read some value from a reader, import ReadPodExt and the needed endianness.
+//!
+//! ```
+//! use podio::{ReadPodExt, BigEndian};
+//!
+//! let slice: &[u8] = &[0x10, 0x20, 0x30, 0x40];
+//! let mut reader = std::io::Cursor::new(slice);
+//!
+//! let value = reader.read_u32::<BigEndian>().unwrap();
+//!
+//! assert_eq!(value, 0x10203040);
+//! ```
+//!
+//! ## Writing
+//!
+//! For writing, you need to import the trait WritePodExt.
+//!
+//! ```
+//! use podio::{WritePodExt, LittleEndian};
+//!
+//! let slice: &mut [u8] = &mut [0; 2];
+//! let mut writer = std::io::Cursor::new(slice);
+//!
+//! writer.write_u16::<LittleEndian>(0x8802).unwrap();
+//!
+//! assert_eq!(writer.into_inner(), &[0x02, 0x88]);
+//! ```
+//!
+//! ## Read exact
+//!
+//! One additional method, not really dealing with POD, is `read_exact`.
+//!
+//! ```
+//! use podio::ReadPodExt;
+//!
+//! let slice: &[u8] = &[0, 1, 2, 3];
+//! let mut reader = std::io::Cursor::new(slice);
+//!
+//! assert_eq!(reader.read_exact(1).unwrap(), [0]);
+//! assert_eq!(reader.read_exact(2).unwrap(), [1,2]);
+//! assert_eq!(reader.read_exact(0).unwrap(), []);
+//! assert_eq!(reader.read_exact(1).unwrap(), [3]);
+//! assert!(reader.read_exact(1).is_err());
 
 #![warn(missing_docs)]
 #![feature(io, core)]
@@ -9,9 +61,9 @@
 use std::io;
 use std::io::prelude::*;
 
-/// Little endian. The number 0xABCD is stored [0xCD, 0xAB]
+/// Little endian. The number `0xABCD` is stored `[0xCD, 0xAB]`
 pub enum LittleEndian {}
-/// Big endian. The number 0xABCD is stored [0xAB, 0xCD]
+/// Big endian. The number `0xABCD` is stored `[0xAB, 0xCD]`
 pub enum BigEndian {}
 
 /// Trait implementing conversion methods for a specific endianness
