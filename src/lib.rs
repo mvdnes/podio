@@ -209,7 +209,7 @@ fn fill_buf<R: Read>(reader: &mut R, buf: &mut [u8]) -> io::Result<()> {
     let mut idx = 0;
     while idx != buf.len() {
         match reader.read(&mut buf[idx..]) {
-            Ok(0) => return Err(io::Error::new(io::ErrorKind::ResourceUnavailable, "Could not read enough bytes", None)),
+            Ok(0) => return Err(io::Error::new(io::ErrorKind::Other, "Could not read enough bytes", None)),
             Ok(v) => { idx += v; }
             Err(e) => return Err(e),
         }
