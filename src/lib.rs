@@ -56,7 +56,7 @@
 //! assert!(reader.read_exact(1).is_err());
 
 #![warn(missing_docs)]
-#![feature(io, core)]
+#![feature(io)]
 
 use std::io;
 use std::io::prelude::*;
@@ -67,7 +67,7 @@ pub enum LittleEndian {}
 pub enum BigEndian {}
 
 /// Trait implementing conversion methods for a specific endianness
-pub trait Endianness : std::marker::MarkerTrait {
+pub trait Endianness : std::marker::PhantomFn<Self> {
     /// Converts a value from the platform type to the specified endianness
     fn int_to_target<T: std::num::Int>(val: T) -> T;
     /// Converts a value from the sepcified endianness to the platform type
