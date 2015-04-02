@@ -86,30 +86,6 @@ pub trait EndianConvert {
     fn from_le(x: Self) -> Self;
 }
 
-macro_rules! impl_platform_convert {
-    ($T:ty) => {
-        impl EndianConvert for $T {
-            fn to_be(self) -> $T {
-                self.to_be()
-            }
-            fn to_le(self) -> $T {
-                self.to_le()
-            }
-            fn from_be(x: $T) -> $T {
-                if cfg!(target_endian = "big") { x } else { x.swap_bytes() }
-            }
-            fn from_le(x: $T) -> $T {
-                if cfg!(target_endian = "little") { x } else { x.swap_bytes() }
-            }
-        }
-    };
-}
-
-impl_platform_convert!(u8);
-impl_platform_convert!(u16);
-impl_platform_convert!(u32);
-impl_platform_convert!(u64);
-
 /// Additional write methods for a io::Write
 pub trait WritePodExt {
     /// Write a u64
@@ -177,6 +153,30 @@ impl Endianness for BigEndian {
         <T as EndianConvert>::from_be(val)
     }
 }
+
+macro_rules! impl_platform_convert {
+    ($T:ty) => {
+        impl EndianConvert for $T {
+            fn to_be(self) -> $T {
+                self.to_be()
+            }
+            fn to_le(self) -> $T {
+                self.to_le()
+            }
+            fn from_be(x: $T) -> $T {
+                if cfg!(target_endian = "big") { x } else { x.swap_bytes() }
+            }
+            fn from_le(x: $T) -> $T {
+                if cfg!(target_endian = "little") { x } else { x.swap_bytes() }
+            }
+        }
+    };
+}
+
+impl_platform_convert!(u8);
+impl_platform_convert!(u16);
+impl_platform_convert!(u32);
+impl_platform_convert!(u64);
 
 macro_rules! val_to_buf {
     ($val:ident, $buf:ident) => {
