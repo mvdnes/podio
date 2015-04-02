@@ -69,10 +69,46 @@ pub enum BigEndian {}
 /// Trait implementing conversion methods for a specific endianness
 pub trait Endianness : std::marker::PhantomFn<Self> {
     /// Converts a value from the platform type to the specified endianness
-    fn int_to_target<T: std::num::Int>(val: T) -> T;
+    fn int_to_target<T: EndianConvert>(val: T) -> T;
     /// Converts a value from the sepcified endianness to the platform type
-    fn int_from_target<T: std::num::Int>(val: T) -> T;
+    fn int_from_target<T: EndianConvert>(val: T) -> T;
 }
+
+/// Generic trait for endian conversions on integers
+pub trait EndianConvert {
+    /// Convert self to a big-endian value
+    fn to_be(self) -> Self;
+    /// Convert self to a little-endian value
+    fn to_le(self) -> Self;
+    /// Convert a big-endian value to the target endianness
+    fn from_be(x: Self) -> Self;
+    /// Convert a little-endian value to the target endiannes
+    fn from_le(x: Self) -> Self;
+}
+
+macro_rules! impl_platform_convert {
+    ($T:ty) => {
+        impl EndianConvert for $T {
+            fn to_be(self) -> $T {
+                self.to_be()
+            }
+            fn to_le(self) -> $T {
+                self.to_le()
+            }
+            fn from_be(x: $T) -> $T {
+                if cfg!(target_endian = "big") { x } else { x.swap_bytes() }
+            }
+            fn from_le(x: $T) -> $T {
+                if cfg!(target_endian = "little") { x } else { x.swap_bytes() }
+            }
+        }
+    };
+}
+
+impl_platform_convert!(u8);
+impl_platform_convert!(u16);
+impl_platform_convert!(u32);
+impl_platform_convert!(u64);
 
 /// Additional write methods for a io::Write
 pub trait WritePodExt {
@@ -125,20 +161,20 @@ pub trait ReadPodExt {
 }
 
 impl Endianness for LittleEndian {
-    fn int_to_target<T: std::num::Int>(val: T) -> T {
+    fn int_to_target<T: EndianConvert>(val: T) -> T {
         val.to_le()
     }
-    fn int_from_target<T: std::num::Int>(val: T) -> T {
-        <T as std::num::Int>::from_le(val)
+    fn int_from_target<T: EndianConvert>(val: T) -> T {
+        <T as EndianConvert>::from_le(val)
     }
 }
 
 impl Endianness for BigEndian {
-    fn int_to_target<T: std::num::Int>(val: T) -> T {
+    fn int_to_target<T: EndianConvert>(val: T) -> T {
         val.to_be()
     }
-    fn int_from_target<T: std::num::Int>(val: T) -> T {
-        <T as std::num::Int>::from_be(val)
+    fn int_from_target<T: EndianConvert>(val: T) -> T {
+        <T as EndianConvert>::from_be(val)
     }
 }
 
