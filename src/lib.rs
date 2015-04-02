@@ -56,7 +56,6 @@
 //! assert!(reader.read_exact(1).is_err());
 
 #![warn(missing_docs)]
-#![feature(io)]
 
 use std::io;
 use std::io::prelude::*;
@@ -245,7 +244,7 @@ fn fill_buf<R: Read>(reader: &mut R, buf: &mut [u8]) -> io::Result<()> {
     let mut idx = 0;
     while idx != buf.len() {
         match reader.read(&mut buf[idx..]) {
-            Ok(0) => return Err(io::Error::new(io::ErrorKind::Other, "Could not read enough bytes", None)),
+            Ok(0) => return Err(io::Error::new(io::ErrorKind::Other, "Could not read enough bytes")),
             Ok(v) => { idx += v; }
             Err(e) => return Err(e),
         }
