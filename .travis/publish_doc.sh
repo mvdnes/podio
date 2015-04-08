@@ -2,7 +2,7 @@
 
 if  [ "$TRAVIS_BRANCH" = "master" ] &&
     [ "$TRAVIS_PULL_REQUEST" = "false" ] &&
-    [ "$TRAVIS_REPO_SLUG" = "mvdnes/podio" ]
+    [ "$TRAVIS_REPO_SLUG" = "mvdnes/podio" ] &&
     [ "$TRAVIS_RUST_VERSION" = "1.0.0-beta" ]
 then
     echo "Publishing documentation..."
