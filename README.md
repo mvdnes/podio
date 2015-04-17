@@ -2,6 +2,7 @@ podio
 =====
 
 [![Build Status](https://travis-ci.org/mvdnes/podio.svg?branch=master)](https://travis-ci.org/mvdnes/podio)
+[![Crates.io version](https://img.shields.io/crates/v/podio.svg)](https://crates.io/crates/podio)
 
 [Documentation](http://mvdnes.github.io/rust-docs/podio/podio/index.html)
 
@@ -14,7 +15,7 @@ Include the following code:
 
 ```toml
 [dependencies]
-podio = "*"
+podio = "0.1"
 ```
 
 Example
