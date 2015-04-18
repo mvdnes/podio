@@ -66,7 +66,7 @@ pub enum LittleEndian {}
 pub enum BigEndian {}
 
 /// Trait implementing conversion methods for a specific endianness
-pub trait Endianness : std::marker::PhantomFn<Self> {
+pub trait Endianness {
     /// Converts a value from the platform type to the specified endianness
     fn int_to_target<T: EndianConvert>(val: T) -> T;
     /// Converts a value from the sepcified endianness to the platform type
