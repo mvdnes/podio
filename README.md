@@ -8,6 +8,8 @@ podio
 
 Implementation for reading and writing POD (plain old data) values in Rust. The name stands for POD I/O.
 
+Keywords: byte, be, le, big-endian, little-endian
+
 Usage
 -----
 
