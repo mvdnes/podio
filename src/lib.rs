@@ -246,6 +246,7 @@ fn fill_buf<R: Read>(reader: &mut R, buf: &mut [u8]) -> io::Result<()> {
         match reader.read(&mut buf[idx..]) {
             Ok(0) => return Err(io::Error::new(io::ErrorKind::Other, "Could not read enough bytes")),
             Ok(v) => { idx += v; }
+            Err(ref e) if e.kind() == io::ErrorKind::Interrupted => {}
             Err(e) => return Err(e),
         }
     }
