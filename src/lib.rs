@@ -136,18 +136,22 @@ pub trait ReadPodExt {
 }
 
 impl Endianness for LittleEndian {
+    #[inline]
     fn int_to_target<T: EndianConvert>(val: T) -> T {
         val.to_le()
     }
+    #[inline]
     fn int_from_target<T: EndianConvert>(val: T) -> T {
         <T as EndianConvert>::from_le(val)
     }
 }
 
 impl Endianness for BigEndian {
+    #[inline]
     fn int_to_target<T: EndianConvert>(val: T) -> T {
         val.to_be()
     }
+    #[inline]
     fn int_from_target<T: EndianConvert>(val: T) -> T {
         <T as EndianConvert>::from_be(val)
     }
@@ -156,15 +160,22 @@ impl Endianness for BigEndian {
 macro_rules! impl_platform_convert {
     ($T:ty) => {
         impl EndianConvert for $T {
+            #[inline]
             fn to_be(self) -> $T {
                 self.to_be()
             }
+
+            #[inline]
             fn to_le(self) -> $T {
                 self.to_le()
             }
+
+            #[inline]
             fn from_be(x: $T) -> $T {
                 if cfg!(target_endian = "big") { x } else { x.swap_bytes() }
             }
+
+            #[inline]
             fn from_le(x: $T) -> $T {
                 if cfg!(target_endian = "little") { x } else { x.swap_bytes() }
             }
@@ -240,6 +251,7 @@ impl<W: Write> WritePodExt for W {
     }
 }
 
+#[inline]
 fn fill_buf<R: Read>(reader: &mut R, buf: &mut [u8]) -> io::Result<()> {
     let mut idx = 0;
     while idx != buf.len() {
