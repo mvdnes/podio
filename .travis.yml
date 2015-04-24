@@ -14,6 +14,7 @@ notifications:
 script:
     - cargo build
     - cargo test
+    - '[ "$TRAVIS_RUST_VERSION" != "nightly" ] || cargo bench'
     - cargo doc --no-deps
     - rustdoc --test README.md -L target/debug
 
