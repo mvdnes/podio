@@ -283,41 +283,51 @@ impl<R: Read> ReadPodExt for R {
         let tval = buf_to_val!(buf, u64);
         Ok(<T as Endianness>::int_from_target(tval))
     }
+
     fn read_u32<T: Endianness>(&mut self) -> io::Result<u32> {
         let buf = &mut [0u8; 4];
         try!(fill_buf(self, buf));
         let tval = buf_to_val!(buf, u32);
         Ok(<T as Endianness>::int_from_target(tval))
     }
+
     fn read_u16<T: Endianness>(&mut self) -> io::Result<u16> {
         let buf = &mut [0u8; 2];
         try!(fill_buf(self, buf));
         let tval = buf_to_val!(buf, u16);
         Ok(<T as Endianness>::int_from_target(tval))
     }
+
     fn read_u8(&mut self) -> io::Result<u8> {
         let buf = &mut [0u8; 1];
         try!(fill_buf(self, buf));
         Ok(buf[0])
     }
+
     fn read_i64<T: Endianness>(&mut self) -> io::Result<i64> {
         self.read_u64::<T>().map(|v| v as i64)
     }
+
     fn read_i32<T: Endianness>(&mut self) -> io::Result<i32> {
         self.read_u32::<T>().map(|v| v as i32)
     }
+
     fn read_i16<T: Endianness>(&mut self) -> io::Result<i16> {
         self.read_u16::<T>().map(|v| v as i16)
     }
+
     fn read_i8(&mut self) -> io::Result<i8> {
         self.read_u8().map(|v| v as i8)
     }
+
     fn read_f64<T: Endianness>(&mut self) -> io::Result<f64> {
         self.read_u64::<T>().map(|v| unsafe { std::mem::transmute::<u64, f64>(v) })
     }
+
     fn read_f32<T: Endianness>(&mut self) -> io::Result<f32> {
         self.read_u32::<T>().map(|v| unsafe { std::mem::transmute::<u32, f32>(v) })
     }
+
     fn read_exact(&mut self, len: usize) -> io::Result<Vec<u8>> {
         let mut res = vec![0; len];
         try!(fill_buf(self, &mut res));
