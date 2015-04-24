@@ -189,34 +189,33 @@ impl_platform_convert!(u32);
 impl_platform_convert!(u64);
 
 macro_rules! val_to_buf {
-    ($val:ident, $buf:ident) => {
+    ($val:ident, $T:expr) => {
         {
-            for i in 0..$buf.len() {
-                $buf[i] = ($val >> (i * 8)) as u8;
+            let mut buf = [0; $T];
+            for i in 0..buf.len() {
+                buf[i] = ($val >> (i * 8)) as u8;
             }
+            buf
         }
     };
 }
 
 impl<W: Write> WritePodExt for W {
     fn write_u64<T: Endianness>(&mut self, val: u64) -> io::Result<()> {
-        let mut buf = [0u8; 8];
         let tval = <T as Endianness>::int_to_target(val);
-        val_to_buf!(tval, buf);
+        let buf = val_to_buf!(tval, 8);
         self.write_all(&buf)
     }
 
     fn write_u32<T: Endianness>(&mut self, val: u32) -> io::Result<()> {
-        let mut buf = [0u8; 4];
         let tval = <T as Endianness>::int_to_target(val);
-        val_to_buf!(tval, buf);
+        let buf = val_to_buf!(tval, 4);
         self.write_all(&buf)
     }
 
     fn write_u16<T: Endianness>(&mut self, val: u16) -> io::Result<()> {
-        let mut buf = [0u8; 2];
         let tval = <T as Endianness>::int_to_target(val);
-        val_to_buf!(tval, buf);
+        let buf = val_to_buf!(tval, 2);
         self.write_all(&buf)
     }
 
@@ -266,11 +265,11 @@ fn fill_buf<R: Read>(reader: &mut R, buf: &mut [u8]) -> io::Result<()> {
 }
 
 macro_rules! buf_to_val {
-    ($buf:ident, $typ:ty) => {
+    ($buf:ident, $T:ty) => {
         {
-            let mut val: $typ = 0;
+            let mut val: $T = 0;
             for i in 0..$buf.len() {
-                val |= ($buf[i] as $typ) << (i * 8);
+                val |= ($buf[i] as $T) << (i * 8);
             }
             val
         }
