@@ -18,7 +18,7 @@ install:
     - sudo sh ~/rustup.sh --spec=$RUST_VERSION > /dev/null
 
 before_script:
-    - ructc --version
+    - rustc --version
     - cargo --version
 
 script:
