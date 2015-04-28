@@ -17,6 +17,3 @@ script:
     - '[ "$TRAVIS_RUST_VERSION" != "nightly" ] || cargo bench'
     - cargo doc --no-deps
     - rustdoc --test README.md -L target/debug
-
-after_success:
-    - curl https://mvdnes.github.io/rust-docs/travis-doc-upload.sh | sh
