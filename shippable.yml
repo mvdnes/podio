@@ -3,7 +3,7 @@ python:
     - 2.7
 
 env:
-    - RUST_VERSION=beta
+    - RUST_VERSION=stable
     - RUST_VERSION=nightly
 
 notifications:
