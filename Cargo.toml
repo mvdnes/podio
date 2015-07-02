@@ -1,10 +1,12 @@
 [package]
 
 name = "podio"
-version = "0.1.3"
+version = "0.1.4"
 authors = ["Mathijs van de Nes <git@mathijs.vd-nes.nl>"]
 license = "MIT"
+keywords = ["byte", "be", "le", "big-endian", "little-endian", "io"]
 repository = "https://github.com/mvdnes/podio.git"
+documentation = "http://mvdnes.github.io/rust-docs/podio/podio/index.html"
 description = """
 Additional trait for Read and Write to read and write Plain Old Data
 """
