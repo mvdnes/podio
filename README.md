@@ -2,6 +2,7 @@ podio
 =====
 
 [![Build Status](https://travis-ci.org/mvdnes/podio.svg?branch=master)](https://travis-ci.org/mvdnes/podio)
+[![Build status](https://ci.appveyor.com/api/projects/status/hjc3icfjob7mocc9/branch/master?svg=true)](https://ci.appveyor.com/project/mvdnes/podio/branch/master)
 [![Crates.io version](https://img.shields.io/crates/v/podio.svg)](https://crates.io/crates/podio)
 
 [Documentation](http://mvdnes.github.io/rust-docs/podio/podio/index.html)
