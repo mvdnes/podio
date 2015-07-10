@@ -129,8 +129,11 @@ fn read_float() {
 #[test]
 fn read_exact() {
     let mut buf: &[u8] = &[1, 2, 3, 4, 5, 6, 7, 8];
-    assert_eq!(<&[u8] as ReadPodExt>::read_exact(&mut buf, 2).unwrap(), [1,2]);
-    assert_eq!(<&[u8] as ReadPodExt>::read_exact(&mut buf, 1).unwrap(), [3]);
-    assert_eq!(<&[u8] as ReadPodExt>::read_exact(&mut buf, 0).unwrap(), []);
-    assert_eq!(<&[u8] as ReadPodExt>::read_exact(&mut buf, 5).unwrap(), [4,5,6,7,8]);
+    assert_eq!(buf.read_exact(2).unwrap(), [1,2]);
+    assert_eq!(buf.read_exact(1).unwrap(), [3]);
+    assert_eq!(buf.read_exact(0).unwrap(), []);
+    assert_eq!(buf.read_exact(5).unwrap(), [4,5,6,7,8]);
+    assert_eq!(buf.read_exact(0).unwrap(), []);
+    assert!(buf.read_exact(1).is_err());
+    assert_eq!(buf.read_exact(0).unwrap(), []);
 }
