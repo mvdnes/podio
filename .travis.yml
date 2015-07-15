@@ -27,4 +27,4 @@ script:
 
 after_success:
     - curl https://mvdnes.github.io/rust-docs/travis-doc-upload.sh | bash
-    - '[ "$TRAVIS_RUST_VERSION" != "stable" ] || script/kcov.sh'
+    - script/kcov.sh
