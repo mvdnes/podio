@@ -1,7 +1,7 @@
 set -e
 shopt -s nullglob
 
-PROJECT=mytest
+PROJECT=podio
 TARGET=$HOME/kcov
 
 wget https://github.com/SimonKagstrom/kcov/archive/master.tar.gz
