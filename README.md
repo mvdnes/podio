@@ -18,7 +18,7 @@ Include the following code:
 
 ```toml
 [dependencies]
-podio = "0.1"
+podio = "0.2"
 ```
 
 Example
