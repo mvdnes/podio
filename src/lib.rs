@@ -65,24 +65,10 @@ pub enum LittleEndian {}
 /// Big endian. The number `0xABCD` is stored `[0xAB, 0xCD]`
 pub enum BigEndian {}
 
-/// Trait implementing conversion methods for a specific endianness
+/// Trait to determine the conversion methods for a specific endianness
 pub trait Endianness {
-    /// Converts a value from the platform type to the specified endianness
-    fn int_to_target<T: EndianConvert>(val: T) -> T;
-    /// Converts a value from the sepcified endianness to the platform type
-    fn int_from_target<T: EndianConvert>(val: T) -> T;
-}
-
-/// Generic trait for endian conversions on integers
-pub trait EndianConvert {
-    /// Convert self to a big-endian value
-    fn to_be(self) -> Self;
-    /// Convert self to a little-endian value
-    fn to_le(self) -> Self;
-    /// Convert a big-endian value to the target endianness
-    fn from_be(x: Self) -> Self;
-    /// Convert a little-endian value to the target endiannes
-    fn from_le(x: Self) -> Self;
+    /// Converts a value between little-endian and the specified endianness
+    fn is_little_endian() -> bool;
 }
 
 /// Additional write methods for a io::Write
@@ -136,100 +122,39 @@ pub trait ReadPodExt {
 }
 
 impl Endianness for LittleEndian {
-    #[inline]
-    fn int_to_target<T: EndianConvert>(val: T) -> T {
-        val.to_le()
-    }
-    #[inline]
-    fn int_from_target<T: EndianConvert>(val: T) -> T {
-        <T as EndianConvert>::from_le(val)
+    fn is_little_endian() -> bool {
+        true
     }
 }
 
 impl Endianness for BigEndian {
-    #[inline]
-    fn int_to_target<T: EndianConvert>(val: T) -> T {
-        val.to_be()
+    fn is_little_endian() -> bool {
+        false
     }
-    #[inline]
-    fn int_from_target<T: EndianConvert>(val: T) -> T {
-        <T as EndianConvert>::from_be(val)
-    }
-}
-
-macro_rules! impl_platform_convert {
-    ($T:ty) => {
-        impl EndianConvert for $T {
-            #[inline]
-            fn to_be(self) -> $T {
-                self.to_be()
-            }
-
-            #[inline]
-            fn to_le(self) -> $T {
-                self.to_le()
-            }
-
-            #[inline]
-            fn from_be(x: $T) -> $T {
-                if cfg!(target_endian = "big") { x } else { x.swap_bytes() }
-            }
-
-            #[inline]
-            fn from_le(x: $T) -> $T {
-                if cfg!(target_endian = "little") { x } else { x.swap_bytes() }
-            }
-        }
-    };
-}
-
-impl_platform_convert!(u8);
-impl_platform_convert!(u16);
-impl_platform_convert!(u32);
-impl_platform_convert!(u64);
-
-#[cfg(target_endian = "little")]
-macro_rules! val_to_buf {
-    ($val:ident, $T:expr) => {
-        {
-            let mut buf = [0; $T];
-            for i in 0..buf.len() {
-                buf[i] = ($val >> (i * 8)) as u8;
-            }
-            buf
-        }
-    };
-}
-
-#[cfg(target_endian = "big")]
-macro_rules! val_to_buf {
-    ($val:ident, $T:expr) => {
-        {
-            let mut buf = [0; $T];
-            for i in 0..buf.len() {
-                buf[buf.len() - 1 - i] = ($val >> (i * 8)) as u8;
-            }
-            buf
-        }
-    };
 }
 
 impl<W: Write> WritePodExt for W {
     fn write_u64<T: Endianness>(&mut self, val: u64) -> io::Result<()> {
-        let tval = <T as Endianness>::int_to_target(val);
-        let buf = val_to_buf!(tval, 8);
+        let buf = match <T as Endianness>::is_little_endian() {
+            true => u64::to_le_bytes(val),
+            false => u64::to_be_bytes(val),
+        };
         self.write_all(&buf)
     }
 
     fn write_u32<T: Endianness>(&mut self, val: u32) -> io::Result<()> {
-        let tval = <T as Endianness>::int_to_target(val);
-        let buf = val_to_buf!(tval, 4);
+        let buf = match <T as Endianness>::is_little_endian() {
+            true => u32::to_le_bytes(val),
+            false => u32::to_be_bytes(val),
+        };
         self.write_all(&buf)
     }
 
     fn write_u16<T: Endianness>(&mut self, val: u16) -> io::Result<()> {
-        let tval = <T as Endianness>::int_to_target(val);
-        let buf = val_to_buf!(tval, 2);
+        let buf = match <T as Endianness>::is_little_endian() {
+            true => u16::to_le_bytes(val),
+            false => u16::to_be_bytes(val),
+        };
         self.write_all(&buf)
     }
 
@@ -278,52 +203,35 @@ fn fill_buf<R: Read>(reader: &mut R, buf: &mut [u8]) -> io::Result<()> {
     Ok(())
 }
 
-#[cfg(target_endian = "little")]
-macro_rules! buf_to_val {
-    ($buf:ident, $T:ty) => {
-        {
-            let mut val: $T = 0;
-            for i in 0..$buf.len() {
-                val |= ($buf[i] as $T) << (i * 8);
-            }
-            val
-        }
-    };
-}
-
-#[cfg(target_endian = "big")]
-macro_rules! buf_to_val {
-    ($buf:ident, $T:ty) => {
-        {
-            let mut val: $T = 0;
-            for i in 0..$buf.len() {
-                val |= ($buf[$buf.len() - 1 - i] as $T) << (i * 8);
-            }
-            val
-        }
-    };
-}
-
 impl<R: Read> ReadPodExt for R {
     fn read_u64<T: Endianness>(&mut self) -> io::Result<u64> {
-        let buf = &mut [0u8; 8];
-        try!(fill_buf(self, buf));
-        let tval = buf_to_val!(buf, u64);
-        Ok(<T as Endianness>::int_from_target(tval))
+        let mut buf = [0u8; 8];
+        try!(fill_buf(self, &mut buf));
+        let val = match <T as Endianness>::is_little_endian() {
+            true => u64::from_le_bytes(buf),
+            false => u64::from_be_bytes(buf),
+        };
+        Ok(val)
     }
 
     fn read_u32<T: Endianness>(&mut self) -> io::Result<u32> {
-        let buf = &mut [0u8; 4];
-        try!(fill_buf(self, buf));
-        let tval = buf_to_val!(buf, u32);
-        Ok(<T as Endianness>::int_from_target(tval))
+        let mut buf = [0u8; 4];
+        try!(fill_buf(self, &mut buf));
+        let val = match <T as Endianness>::is_little_endian() {
+            true => u32::from_le_bytes(buf),
+            false => u32::from_be_bytes(buf),
+        };
+        Ok(val)
     }
 
     fn read_u16<T: Endianness>(&mut self) -> io::Result<u16> {
-        let buf = &mut [0u8; 2];
-        try!(fill_buf(self, buf));
-        let tval = buf_to_val!(buf, u16);
-        Ok(<T as Endianness>::int_from_target(tval))
+        let mut buf = [0u8; 2];
+        try!(fill_buf(self, &mut buf));
+        let val = match <T as Endianness>::is_little_endian() {
+            true => u16::from_le_bytes(buf),
+            false => u16::from_be_bytes(buf),
+        };
+        Ok(val)
     }
 
     fn read_u8(&mut self) -> io::Result<u8> {
