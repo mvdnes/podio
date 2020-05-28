@@ -5,6 +5,7 @@ arch:
   - s390x
 
 os: linux
+dist: bionic
 
 rust:
     - stable
