@@ -188,12 +188,26 @@ impl_platform_convert!(u16);
 impl_platform_convert!(u32);
 impl_platform_convert!(u64);
 
+#[cfg(target_endian = "little")]
 macro_rules! val_to_buf {
     ($val:ident, $T:expr) => {
         {
             let mut buf = [0; $T];
             for i in 0..buf.len() {
                 buf[i] = ($val >> (i * 8)) as u8;
+            }
+            buf
+        }
+    };
+}
+
+#[cfg(target_endian = "big")]
+macro_rules! val_to_buf {
+    ($val:ident, $T:expr) => {
+        {
+            let mut buf = [0; $T];
+            for i in 0..buf.len() {
+                buf[buf.len() - 1 - i] = ($val >> (i * 8)) as u8;
             }
             buf
         }
@@ -264,12 +278,26 @@ fn fill_buf<R: Read>(reader: &mut R, buf: &mut [u8]) -> io::Result<()> {
     Ok(())
 }
 
+#[cfg(target_endian = "little")]
 macro_rules! buf_to_val {
     ($buf:ident, $T:ty) => {
         {
             let mut val: $T = 0;
             for i in 0..$buf.len() {
                 val |= ($buf[i] as $T) << (i * 8);
+            }
+            val
+        }
+    };
+}
+
+#[cfg(target_endian = "big")]
+macro_rules! buf_to_val {
+    ($buf:ident, $T:ty) => {
+        {
+            let mut val: $T = 0;
+            for i in 0..$buf.len() {
+                val |= ($buf[$buf.len() - 1 - i] as $T) << (i * 8);
             }
             val
         }
