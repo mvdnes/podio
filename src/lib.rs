@@ -206,7 +206,7 @@ fn fill_buf<R: Read>(reader: &mut R, buf: &mut [u8]) -> io::Result<()> {
 impl<R: Read> ReadPodExt for R {
     fn read_u64<T: Endianness>(&mut self) -> io::Result<u64> {
         let mut buf = [0u8; 8];
-        try!(fill_buf(self, &mut buf));
+        fill_buf(self, &mut buf)?;
         let val = match <T as Endianness>::is_little_endian() {
             true => u64::from_le_bytes(buf),
             false => u64::from_be_bytes(buf),
@@ -216,7 +216,7 @@ impl<R: Read> ReadPodExt for R {
 
     fn read_u32<T: Endianness>(&mut self) -> io::Result<u32> {
         let mut buf = [0u8; 4];
-        try!(fill_buf(self, &mut buf));
+        fill_buf(self, &mut buf)?;
         let val = match <T as Endianness>::is_little_endian() {
             true => u32::from_le_bytes(buf),
             false => u32::from_be_bytes(buf),
@@ -226,7 +226,7 @@ impl<R: Read> ReadPodExt for R {
 
     fn read_u16<T: Endianness>(&mut self) -> io::Result<u16> {
         let mut buf = [0u8; 2];
-        try!(fill_buf(self, &mut buf));
+        fill_buf(self, &mut buf)?;
         let val = match <T as Endianness>::is_little_endian() {
             true => u16::from_le_bytes(buf),
             false => u16::from_be_bytes(buf),
@@ -236,7 +236,7 @@ impl<R: Read> ReadPodExt for R {
 
     fn read_u8(&mut self) -> io::Result<u8> {
         let buf = &mut [0u8; 1];
-        try!(fill_buf(self, buf));
+        fill_buf(self, buf)?;
         Ok(buf[0])
     }
 
@@ -266,7 +266,7 @@ impl<R: Read> ReadPodExt for R {
 
     fn read_exact(&mut self, len: usize) -> io::Result<Vec<u8>> {
         let mut res = vec![0; len];
-        try!(fill_buf(self, &mut res));
+        fill_buf(self, &mut res)?;
         Ok(res)
     }
 }
